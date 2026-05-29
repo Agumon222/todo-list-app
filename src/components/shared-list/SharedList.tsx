@@ -187,23 +187,30 @@ export default function SharedList({ listId }: SharedListProps) {
                   >
                     {item.content}
                   </span>
-                  <div className="flex items-center gap-2">
+                  <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
                     {item.creator_nickname && (
-                      <span className="text-[10px] text-[#8E8E93]">
+                      <span className="text-[11px] text-[#8E8E93]">
                         {item.creator_nickname}
                       </span>
                     )}
-                    {item.deadline && (
+                    {/* Deadline badge */}
+                    {item.deadline ? (
                       <span
                         className={cn(
-                          'inline-flex items-center gap-0.5 text-[10px]',
+                          'inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[11px] font-medium',
                           pastDue
-                            ? 'text-[#FF6B6B]'
-                            : 'text-[#8E8E93]'
+                            ? 'bg-red-50 text-red-500'
+                            : 'bg-amber-50 text-amber-600'
                         )}
                       >
-                        <Clock className="size-2.5" />
-                        DDL: {formatDate(item.deadline)}
+                        <Clock className="size-3" />
+                        {pastDue ? '已过期 ' : '截止 '}
+                        {formatDate(item.deadline)}
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1 text-[11px] text-[#B0B0B0]">
+                        <Clock className="size-3" />
+                        无截止日期
                       </span>
                     )}
                   </div>

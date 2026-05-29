@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Plus, Calendar } from 'lucide-react'
+import { Plus, Clock } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 interface AddSharedItemFormProps {
@@ -11,7 +11,6 @@ interface AddSharedItemFormProps {
 export default function AddSharedItemForm({ onAdd }: AddSharedItemFormProps) {
   const [content, setContent] = useState('')
   const [deadline, setDeadline] = useState('')
-  const [showDeadline, setShowDeadline] = useState(false)
   const [submitting, setSubmitting] = useState(false)
 
   async function handleSubmit(e: React.FormEvent) {
@@ -24,13 +23,14 @@ export default function AddSharedItemForm({ onAdd }: AddSharedItemFormProps) {
       await onAdd(trimmed, deadline || null)
       setContent('')
       setDeadline('')
-      setShowDeadline(false)
     } catch (err) {
       console.error('Failed to add item:', err)
     } finally {
       setSubmitting(false)
     }
   }
+
+  const todayStr = new Date().toISOString().split('T')[0]
 
   return (
     <form
@@ -52,19 +52,6 @@ export default function AddSharedItemForm({ onAdd }: AddSharedItemFormProps) {
           )}
         />
         <button
-          type="button"
-          onClick={() => setShowDeadline(!showDeadline)}
-          className={cn(
-            'flex size-11 shrink-0 items-center justify-center rounded-lg transition-colors',
-            showDeadline
-              ? 'bg-[#A8D8EA] text-white'
-              : 'text-[#8E8E93] hover:bg-[#F0EDE8]'
-          )}
-          aria-label="设置截止日期"
-        >
-          <Calendar className="size-5" />
-        </button>
-        <button
           type="submit"
           disabled={!content.trim() || submitting}
           className={cn(
@@ -79,32 +66,29 @@ export default function AddSharedItemForm({ onAdd }: AddSharedItemFormProps) {
         </button>
       </div>
 
-      {/* Deadline picker */}
-      {showDeadline && (
-        <div className="mt-2 flex items-center gap-2 animate-slide-up">
-          <label className="text-xs text-[#8E8E93] whitespace-nowrap">
-            截止日期:
-          </label>
-          <input
-            type="date"
-            value={deadline}
-            onChange={(e) => setDeadline(e.target.value)}
-            className={cn(
-              'min-h-[36px] flex-1 rounded-lg border border-[#E8E5E0] bg-[#FAF8F5] px-3 text-sm',
-              'focus:border-[#A8D8EA] focus:ring-2 focus:ring-[#A8D8EA]/30 focus:outline-none'
-            )}
-          />
-          {deadline && (
-            <button
-              type="button"
-              onClick={() => setDeadline('')}
-              className="text-xs text-[#FF6B6B] hover:underline"
-            >
-              清除
-            </button>
+      {/* Deadline input — always visible */}
+      <div className="mt-2 flex items-center gap-2">
+        <Clock className="size-3.5 text-[#8E8E93] shrink-0" />
+        <input
+          type="date"
+          value={deadline}
+          min={todayStr}
+          onChange={(e) => setDeadline(e.target.value)}
+          className={cn(
+            'min-h-[36px] flex-1 rounded-lg border border-[#E8E5E0] bg-[#FAF8F5] px-3 text-sm text-[#2D3436]',
+            'focus:border-[#A8D8EA] focus:ring-2 focus:ring-[#A8D8EA]/30 focus:outline-none'
           )}
-        </div>
-      )}
+        />
+        {deadline && (
+          <button
+            type="button"
+            onClick={() => setDeadline('')}
+            className="text-xs text-[#8E8E93] hover:text-[#FF6B6B] shrink-0"
+          >
+            清除
+          </button>
+        )}
+      </div>
     </form>
   )
 }

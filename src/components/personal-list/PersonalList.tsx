@@ -15,7 +15,6 @@ export default function PersonalList() {
     usePersonalList()
   const [newContent, setNewContent] = useState('')
   const [newDeadline, setNewDeadline] = useState('')
-  const [showDeadline, setShowDeadline] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editContent, setEditContent] = useState('')
@@ -48,7 +47,6 @@ export default function PersonalList() {
       await addItem(trimmed, newDeadline || null)
       setNewContent('')
       setNewDeadline('')
-      setShowDeadline(false)
     } catch (err) {
       console.error('Failed to add item:', err)
     } finally {
@@ -213,10 +211,15 @@ export default function PersonalList() {
                       >
                         {item.content}
                       </span>
-                      {item.deadline && (
-                        <span className="text-[10px] text-[#8E8E93] inline-flex items-center gap-0.5">
-                          <Calendar className="size-2.5" />
-                          DDL: {formatDate(item.deadline)}
+                      {item.deadline ? (
+                        <span className="inline-flex items-center gap-1 rounded-md bg-amber-50 px-1.5 py-0.5 text-[11px] font-medium text-amber-600">
+                          <Calendar className="size-3" />
+                          截止 {formatDate(item.deadline)}
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 text-[11px] text-[#B0B0B0]">
+                          <Calendar className="size-3" />
+                          无截止日期
                         </span>
                       )}
                     </div>
@@ -296,19 +299,6 @@ export default function PersonalList() {
             )}
           />
           <button
-            type="button"
-            onClick={() => setShowDeadline(!showDeadline)}
-            className={cn(
-              'flex size-11 shrink-0 items-center justify-center rounded-lg transition-colors',
-              showDeadline
-                ? 'bg-[#A8D8EA] text-white'
-                : 'text-[#8E8E93] hover:bg-[#F0EDE8]'
-            )}
-            aria-label="设置截止日期"
-          >
-            <Calendar className="size-5" />
-          </button>
-          <button
             type="submit"
             disabled={!newContent.trim() || submitting}
             className={cn(
@@ -327,32 +317,29 @@ export default function PersonalList() {
           </button>
         </div>
 
-        {/* Deadline picker */}
-        {showDeadline && (
-          <div className="mt-2 flex items-center gap-2 animate-slide-up">
-            <label className="text-xs text-[#8E8E93] whitespace-nowrap">
-              截止日期:
-            </label>
-            <input
-              type="date"
-              value={newDeadline}
-              onChange={(e) => setNewDeadline(e.target.value)}
-              className={cn(
-                'min-h-[36px] flex-1 rounded-lg border border-[#E8E5E0] bg-[#FAF8F5] px-3 text-sm',
-                'focus:border-[#A8D8EA] focus:ring-2 focus:ring-[#A8D8EA]/30 focus:outline-none'
-              )}
-            />
-            {newDeadline && (
-              <button
-                type="button"
-                onClick={() => setNewDeadline('')}
-                className="text-xs text-[#FF6B6B] hover:underline"
-              >
-                清除
-              </button>
+        {/* Deadline input — always visible */}
+        <div className="mt-2 flex items-center gap-2">
+          <Calendar className="size-3.5 text-[#8E8E93] shrink-0" />
+          <input
+            type="date"
+            value={newDeadline}
+            min={new Date().toISOString().split('T')[0]}
+            onChange={(e) => setNewDeadline(e.target.value)}
+            className={cn(
+              'min-h-[36px] flex-1 rounded-lg border border-[#E8E5E0] bg-[#FAF8F5] px-3 text-sm text-[#2D3436]',
+              'focus:border-[#A8D8EA] focus:ring-2 focus:ring-[#A8D8EA]/30 focus:outline-none'
             )}
-          </div>
-        )}
+          />
+          {newDeadline && (
+            <button
+              type="button"
+              onClick={() => setNewDeadline('')}
+              className="text-xs text-[#8E8E93] hover:text-[#FF6B6B] shrink-0"
+            >
+              清除
+            </button>
+          )}
+        </div>
       </form>
     </div>
   )
