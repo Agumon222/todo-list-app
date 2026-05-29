@@ -1,0 +1,21 @@
+{
+  "name": "待办清单",
+  "short_name": "待办清单",
+  "description": "共享待办清单 — 和朋友们一起管理任务",
+  "start_url": "/app/shared",
+  "display": "standalone",
+  "background_color": "#FAF8F5",
+  "theme_color": "#FAF8F5",
+  "icons": [
+    {
+      "src": "/icons/icon-192x192.svg",
+      "sizes": "192x192",
+      "type": "image/svg+xml"
+    },
+    {
+      "src": "/icons/icon-512x512.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml"
+    }
+  ]
+}

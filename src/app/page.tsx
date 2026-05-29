@@ -1,65 +1,123 @@
-import Image from "next/image";
+'use client'
 
-export default function Home() {
+import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
+import { createClient } from '@/lib/supabase/client'
+import { Button } from '@/components/ui/button'
+
+type PageState = 'loading' | 'error' | 'redirecting'
+
+export default function HomePage() {
+  const router = useRouter()
+  const [state, setState] = useState<PageState>('loading')
+  const [errorMessage, setErrorMessage] = useState('')
+
+  useEffect(() => {
+    let cancelled = false
+
+    async function bootstrap() {
+      try {
+        const supabase = createClient()
+
+        // Read return_to from URL (for invite redirect flow)
+        const params = new URLSearchParams(window.location.search)
+        const returnTo = params.get('return_to')
+
+        // 1. Check for existing session
+        const {
+          data: { session },
+        } = await supabase.auth.getSession()
+
+        let userId: string | undefined = session?.user?.id
+
+        // 2. If no session, sign in anonymously
+        if (!userId) {
+          const { data, error: signInError } =
+            await supabase.auth.signInAnonymously()
+          if (signInError) throw signInError
+          userId = data.user?.id
+        }
+
+        if (!userId) throw new Error('无法获取用户信息')
+
+        if (cancelled) return
+
+        // 3. Check if profile exists
+        const { data: profile, error: profileError } = await supabase
+          .from('profiles')
+          .select('id')
+          .eq('id', userId)
+          .single()
+
+        if (profileError && profileError.code !== 'PGRST116') {
+          throw profileError
+        }
+
+        if (cancelled) return
+
+        // 4. Redirect based on profile existence and return_to
+        if (profile) {
+          router.replace(returnTo || '/app/shared')
+        } else if (returnTo) {
+          router.replace(`/onboarding?return_to=${encodeURIComponent(returnTo)}`)
+        } else {
+          router.replace('/onboarding')
+        }
+
+        setState('redirecting')
+      } catch (err) {
+        if (!cancelled) {
+          console.error('Auth bootstrap error:', err)
+          setErrorMessage(
+            err instanceof Error ? err.message : '连接失败，请重试'
+          )
+          setState('error')
+        }
+      }
+    }
+
+    bootstrap()
+
+    return () => {
+      cancelled = true
+    }
+  }, [router])
+
+  if (state === 'error') {
+    return (
+      <div className="flex min-h-screen flex-col items-center justify-center bg-[#FAF8F5] px-6">
+        <div className="flex flex-col items-center gap-4 text-center">
+          <div className="text-5xl">😵</div>
+          <p className="text-sm text-muted-foreground">{errorMessage}</p>
+          <Button
+            variant="default"
+            onClick={() => {
+              setState('loading')
+              setErrorMessage('')
+              window.location.reload()
+            }}
+          >
+            重试
+          </Button>
+        </div>
+      </div>
+    )
+  }
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
+    <div className="flex min-h-screen flex-col items-center justify-center bg-[#FAF8F5] px-6">
+      <div className="flex flex-col items-center gap-4">
+        <h1
+          className="text-3xl font-semibold tracking-tight animate-pulse"
+          style={{
+            fontFamily:
+              '-apple-system, BlinkMacSystemFont, "PingFang SC", "Noto Sans SC", system-ui, sans-serif',
+            color: '#5B7B7A',
+          }}
+        >
+          待办清单
+        </h1>
+      </div>
     </div>
-  );
+  )
 }
