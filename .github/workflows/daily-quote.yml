@@ -1,0 +1,17 @@
+name: Daily Quote Fetch
+
+on:
+  schedule:
+    # 16:00 UTC = 00:00 北京时间
+    - cron: '0 16 * * *'
+  workflow_dispatch:
+
+jobs:
+  fetch-quote:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Fetch daily quote
+        run: |
+          curl -s -X POST "${{ secrets.APP_URL }}/api/quote/fetch" \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            -H "Content-Type: application/json"
